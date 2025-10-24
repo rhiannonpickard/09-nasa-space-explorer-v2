@@ -1,0 +1,10 @@
+{
+  "name": "nasa-space-explorer-v2",
+  "version": "1.0.0",
+  "description": "Static gallery that displays APOD-style items from a provided JSON feed.",
+  "scripts": {
+    "test": "node test/smoke.js"
+  },
+  "author": "GCA-Classroom",
+  "license": "MIT"
+}

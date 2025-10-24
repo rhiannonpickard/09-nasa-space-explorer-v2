@@ -53,4 +53,41 @@ The goal is to ensure users can easily access or clearly view content regardless
 * **Fetch the JSON:** Request the CDN URL above and parse the returned array.
 * **Display the Gallery:** For each item, show the image (or video thumbnail/player), title, and date.
 
+---
+
+## Features added in this workspace
+
+- Initial load of the latest items (paginated, 12 per page).
+- Date range filtering using the Start / End date pickers.
+- Click a card to open a details modal with explanation and media (images embedded, YouTube embedded when possible).
+- Lazy-loading images for better performance (`loading="lazy"`, `decoding="async"`).
+- Hover and focus styles for cards (visual lift + accessible focus outlines).
+- Credit/copyright shown when present in item metadata.
+- "Load more" button to paginate older/newer items.
+
+## Run locally
+
+Serve the folder with a small static server and open the page in your browser:
+
+```bash
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
+
+## Test (smoke)
+
+This repo includes a tiny smoke test that verifies the CDN feed returns an array. Run:
+
+```bash
+npm install # optional, package.json exists but has no deps
+npm test
+```
+
+The test uses Node's built-in https to fetch the JSON and will exit non-zero on failures.
+
+## Notes
+
+- The app expects APOD-like objects (date in YYYY-MM-DD). If the feed changes shape, you may need to adapt the parsing logic.
+- If you want infinite scroll instead of "Load more", I can add that next.
+
 

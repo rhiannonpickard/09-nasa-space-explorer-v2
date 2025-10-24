@@ -7,9 +7,69 @@
 
 /* Base page styles */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f1f1f1;
-  padding: 20px;
+  /* NASA-inspired palette */
+  --nasa-blue: #0b3d91; /* primary NASA blue */
+  --nasa-red: #c4002b;  /* accent red */
+  --nasa-bg: #041230;   /* deep space background */
+  --nasa-surface: #ffffff;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--nasa-bg);
+  padding: 22px;
+}
+
+/* Outer-space themed background: prefer an image asset (add img/space-bg.webp or jpg),
+   and fall back to CSS gradients if the image is not present. Kept fixed and non-interactive. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  /* Prefer WebP, fall back to JPG/PNG if not available, then fall back to CSS gradients */
+  background-image:
+    url('img/space-bg.webp'),
+    url('img/space-bg.jpg'),
+    url('img/space-bg.png'),
+    radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.0) 40%),
+    radial-gradient(1.5px 1.5px at 40% 70%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.0) 35%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.0) 30%),
+    radial-gradient(600px 220px at 10% 10%, rgba(18,24,46,0.6), transparent 60%),
+    radial-gradient(500px 260px at 90% 80%, rgba(40,30,70,0.45), transparent 60%);
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: center center, center center, center center, 20% 30%, 40% 70%, 70% 20%, 10% 10%, 90% 80%;
+  background-size: cover, cover, cover, auto, auto, auto, cover, cover;
+  background-color: transparent;
+  opacity: 0.98;
+}
+
+/* Twinkling stars layer: subtle animated overlay using repeating radial dots. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -3;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.9) 1px, rgba(255,255,255,0.0) 2px);
+  background-size: 40px 40px;
+  opacity: 0.06;
+  animation: twinkle 6s linear infinite;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.04; transform: translateY(0); }
+  50% { opacity: 0.09; transform: translateY(-6px); }
+  100% { opacity: 0.05; transform: translateY(0); }
+}
+
+/* Starfield canvas sits above the gradient fallbacks but below the content */
+#starfield {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+  display: block;
 }
 
 /* Centered container */
@@ -23,16 +83,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding: 18px 24px;
   margin-bottom: 20px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(11,24,50,0.06));
+  /* stronger elevated shadow so the header stands out over the starfield */
+  box-shadow: 0 20px 48px rgba(2,6,23,0.7), 0 6px 20px rgba(11,61,145,0.06);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
-h1 {
-  font-family: Verdana, sans-serif;
-  font-weight: bold;
-  color: #212121;
+.site-header .logo { filter: drop-shadow(0 6px 10px rgba(0,0,0,0.6)); width: 160px; height: auto; }
+.site-header h1 { color: var(--nasa-surface); margin: 0 0 0 14px; font-size: 28px; letter-spacing: 0.6px; }
+.site-header .tagline { margin: 4px 0 0 14px; color: rgba(255,255,255,0.85); font-size: 13px; }
+
+h1 { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+
+/* Footer */
+.site-footer {
+  margin-top: 18px;
+  padding: 14px 18px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.03);
 }
+.site-footer p { margin: 0; line-height: 1.4; }
 
 /* Logo */
 .logo {
@@ -50,12 +128,44 @@ h1 {
   padding: 0 20px;
 }
 
+/* ensure controls align vertically center beside the Fetch button on larger screens */
+@media (min-width: 600px) {
+  .filters { align-items: center; }
+}
+
+.date-control {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-trigger {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.date-trigger .icon { display: inline-block; width: 18px; height: 18px; }
+.date-trigger svg { display: block; width: 18px; height: 18px; }
+
+.date-control label { margin-right: 8px; color: rgba(255,255,255,0.9); font-size: 13px; }
+
+@media (max-width: 599px) {
+  .date-control { flex-direction: column; align-items: stretch; }
+  .date-control label { margin-bottom: 6px; margin-right: 0; }
+}
+
+/* date-info and notice removed: we allow infinite timeline and no dataset bounds hint */
+
 /* Inputs and buttons */
 input[type="date"],
 button {
   font-family: Arial, sans-serif;
   font-weight: normal;
-  color: #666;
+  color: #333;
   padding: 10px 15px;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -64,14 +174,44 @@ button {
   width: 100%;
 }
 
+/* Date tracker (inputs + fetch button) uses NASA red with a subtle white glow */
+.filters input[type="date"] {
+  background: var(--nasa-red);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 20px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.25);
+}
+.filters input[type="date"]:focus {
+  outline: 3px solid rgba(255,255,255,0.16);
+  box-shadow: 0 10px 26px rgba(255,255,255,0.08), 0 2px 6px rgba(0,0,0,0.12);
+}
+/* Add a matching calendar icon and sizing to date inputs so they visually match the red button */
+.filters input[type="date"] {
+  padding-right: 46px; /* space for trigger button */
+  height: 42px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  /* no background-image here — the `.date-trigger` button shows the calendar icon */
+}
+.filters input[type="date"]::-webkit-calendar-picker-indicator {
+  /* keep the native indicator but don't let it block pointer events */
+  opacity: 0;
+  pointer-events: none;
+}
+.filters input[type="date"]::placeholder { color: rgba(255,255,255,0.9); }
+
 /* Button specific */
 button {
-  background-color: #d3d3d3;
-  color: black;
+  background-color: var(--nasa-blue);
+  color: #fff;
   cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 8px 20px rgba(11,61,145,0.12);
 }
 button:hover {
-  background-color: #bfbfbf;
+  background-color: #093270; /* slightly darker */
 }
 
 /* Stack horizontally on wider screens */
@@ -141,4 +281,266 @@ button:hover {
 .placeholder-icon {
   font-size: 48px;
   margin-bottom: 20px;
+}
+
+/* Card styles used by script.js */
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(250,250,250,0.99));
+  border-radius: 8px;
+  /* warmer, stronger white glow to lift the card from the dark background */
+  box-shadow:
+    0 24px 48px rgba(11,61,145,0.08),
+    0 10px 26px rgba(11,61,145,0.06),
+    0 6px 18px rgba(0,0,0,0.12);
+  border: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  max-width: 420px;
+}
+
+.thumb-wrap {
+  background: #111;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  overflow: hidden;
+}
+
+.thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  text-align: center;
+}
+
+.meta {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meta .title {
+  font-weight: 700;
+  color: #222;
+}
+
+.meta .date {
+  font-size: 13px;
+  color: #666;
+}
+
+.meta .credit {
+  font-size: 12px;
+  color: #444;
+  opacity: 0.9;
+}
+
+/* Card interaction & focus styles */
+.card {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+.card:focus {
+  outline: 3px solid rgba(30,144,255,0.18);
+  transform: translateY(-4px);
+}
+
+/* load more button will share the polished red primary styling with the Fetch button */
+/* (applies further down using combined selectors) */
+
+/* Make the gallery a grid so cards wrap nicely */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Style for the Fetch button inside the filters to use NASA red theme */
+/* Primary red action buttons: Fetch and Load more */
+#getImageBtn, #loadMoreBtn {
+  /* polished red button: gradient, glossy highlight, white glow and tactile hover */
+  background: linear-gradient(180deg, #ff5968 0%, #d21b36 55%, #a80026 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  box-shadow:
+    0 10px 30px rgba(168,0,38,0.18), /* warm outer glow */
+    0 4px 10px rgba(0,0,0,0.35),     /* depth */
+    inset 0 1px 0 rgba(255,255,255,0.06); /* subtle top sheen */
+  transition: transform 200ms cubic-bezier(.2,.9,.2,1), box-shadow 180ms ease, filter 120ms ease;
+}
+
+/* Icon inside primary buttons */
+#getImageBtn .btn-icon, #loadMoreBtn .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+#getImageBtn .btn-icon svg, #loadMoreBtn .btn-icon svg {
+  display: block; width: 18px; height: 18px;
+}
+
+#getImageBtn::before, #loadMoreBtn::before {
+  /* glossy highlight */
+  content: '';
+  position: absolute;
+  left: -20%;
+  top: -40%;
+  width: 140%;
+  height: 70%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28), rgba(255,255,255,0.06) 40%, rgba(255,255,255,0));
+  transform: rotate(-12deg) translateY(0);
+  opacity: 0.95;
+  pointer-events: none;
+  transition: transform 320ms ease, opacity 220ms ease;
+  mix-blend-mode: screen;
+}
+
+#getImageBtn:hover, #loadMoreBtn:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 18px 44px rgba(168,0,38,0.22), 0 6px 18px rgba(0,0,0,0.36);
+}
+
+#getImageBtn:active, #loadMoreBtn:active {
+  transform: translateY(-1px) scale(0.998);
+  transition-duration: 120ms;
+}
+
+#getImageBtn:focus, #loadMoreBtn:focus {
+  outline: 3px solid rgba(255,255,255,0.22);
+  box-shadow: 0 12px 36px rgba(168,0,38,0.20), 0 4px 12px rgba(0,0,0,0.28);
+}
+
+#getImageBtn:hover::before, #loadMoreBtn:hover::before { transform: rotate(-12deg) translateY(6%); opacity: 0.98; }
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-inner {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 960px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  position: relative;
+  padding: 20px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-media img,
+.modal-media iframe {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  margin: 0 0 6px 0;
+  font-size: 20px;
+}
+
+.modal-date {
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.modal-explanation {
+  color: #333;
+  line-height: 1.45;
+}
+
+/* Image placeholder / shimmer for lazy-loading */
+.thumb-wrap .lazy {
+  background: linear-gradient(90deg, #efefef 25%, #f6f6f6 37%, #efefef 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+.thumb-wrap img.lazy {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 0 }
+  100% { background-position: -100% 0 }
+}
+
+/* If a low-res thumbnail is available, show it behind the lazy img as a subtle placeholder */
+.thumb-wrap.has-thumb-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.thumb-wrap.has-thumb-bg .lazy {
+  /* keep shimmer on top until full image loads */
+  background-color: transparent;
+}
+
+/* small sentinel spacing (in case it's visible) */
+#scrollSentinel {
+  width: 100%;
+  height: 1px;
+}
+
+/* Actions / load more button placement */
+.actions {
+  text-align: center;
+  margin-top: 12px;
+}
+
+#loadMoreBtn {
+  display: none; /* shown via JS when there are more pages */
 }
