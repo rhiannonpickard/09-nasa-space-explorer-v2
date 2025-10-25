@@ -5,6 +5,18 @@
 (function () {
 	'use strict';
 
+		// Basic runtime diagnostics to help debug why the loading overlay may not appear.
+		try {
+			console.log('script.js IIFE start');
+		} catch (e) { /* ignore */ }
+
+		window.addEventListener('error', (ev) => {
+			console.error('Uncaught error:', ev && ev.error ? ev.error : ev.message || ev);
+		});
+		window.addEventListener('unhandledrejection', (ev) => {
+			console.error('Unhandled promise rejection:', ev && ev.reason ? ev.reason : ev);
+		});
+
 	// Use this URL to fetch NASA APOD JSON data.
 	const apodData = 'https://cdn.jsdelivr.net/gh/GCA-Classroom/apod/data.json';
 
@@ -195,14 +207,100 @@
 
 	// Note: no transient notice function — date tracker is infinite and unclamped.
 
-	function setLoading(isLoading) {
-		if (isLoading) {
-			btn.disabled = true;
-			galleryEl.innerHTML = '<p>Loading…</p>';
-		} else {
-			btn.disabled = false;
-		}
+// Loading overlay that cycles short "Did you know?" NASA facts while network calls happen.
+const LOADING_FACTS = [
+	'Did you know? The Hubble Space Telescope has observed objects more than 13 billion light-years away.',
+	'Did you know? Voyager 1 is the farthest human-made object from Earth and is still sending back data.',
+	"Did you know? The Sun makes up 99.86% of the mass in our solar system.",
+	'Did you know? NASA’s Perseverance rover collects rock samples to help search for signs of ancient life on Mars.',
+	'Did you know? The International Space Station travels around Earth at about 17,150 miles per hour (27,600 km/h).',
+	'Did you know? Black holes can warp space and time so severely that not even light can escape from them.'
+];
+
+let _factsOverlay = null;
+let _factIdx = 0;
+let _factTimer = null;
+
+function _createFactsOverlay() {
+	if (_factsOverlay) return _factsOverlay;
+	const ov = document.createElement('div');
+	ov.className = 'facts-overlay';
+	ov.setAttribute('aria-hidden', 'true');
+	ov.innerHTML = `
+		<div class="facts-card" role="status" aria-live="polite">
+			<div class="facts-header">Did you know?</div>
+			<div class="fact-body">
+				<div class="fact-text">${LOADING_FACTS[_factIdx]}</div>
+				<div class="fact-sub">Loading images…</div>
+			</div>
+			<div class="fact-spinner" aria-hidden="true"></div>
+		</div>
+	`;
+	// Append to body if available; otherwise fall back to documentElement to avoid null errors
+	const host = document.body || document.documentElement;
+	host.appendChild(ov);
+	_factsOverlay = ov;
+	return _factsOverlay;
+}
+
+function _showFactsLoading() {
+	const ov = _createFactsOverlay();
+	console.log('Showing facts loading overlay');
+	ov.style.display = 'flex';
+	ov.setAttribute('aria-hidden', 'false');
+	const txt = ov.querySelector('.fact-text');
+	if (txt) { txt.style.opacity = '0'; setTimeout(() => { txt.textContent = LOADING_FACTS[_factIdx]; txt.style.opacity = '1'; }, 20); }
+	if (_factTimer) clearInterval(_factTimer);
+	_factTimer = setInterval(() => {
+		_factIdx = (_factIdx + 1) % LOADING_FACTS.length;
+		const t = ov.querySelector('.fact-text');
+		if (!t) return;
+		t.style.opacity = '0';
+		setTimeout(() => { t.textContent = LOADING_FACTS[_factIdx]; t.style.opacity = '1'; }, 350);
+	}, 4000);
+}
+
+function _hideFactsLoading() {
+	if (!_factsOverlay) return;
+	console.log('Hiding facts loading overlay');
+	_factsOverlay.style.display = 'none';
+	_factsOverlay.setAttribute('aria-hidden', 'true');
+	if (_factTimer) { clearInterval(_factTimer); _factTimer = null; }
+}
+
+// Show a single random "Did you know?" banner after initial load so users see a fun fact
+function showRandomFactOnLoad(durationMs = 6000) {
+	try {
+		const idx = Math.floor(Math.random() * LOADING_FACTS.length);
+		const text = LOADING_FACTS[idx];
+		const banner = document.createElement('div');
+		banner.className = 'didyouknow-banner';
+		banner.setAttribute('role', 'status');
+		banner.innerHTML = `<div class="didyouknow-inner"><strong>Did you know?</strong><div class="didyouknow-text">${text}</div><button class="didyouknow-close" aria-label="Dismiss">×</button></div>`;
+		const host = document.body || document.documentElement;
+		host.appendChild(banner);
+		// show animation
+		requestAnimationFrame(() => { banner.classList.add('visible'); });
+		// close handler
+		banner.querySelector('.didyouknow-close').addEventListener('click', () => { banner.classList.remove('visible'); setTimeout(() => banner.remove(), 300); });
+		// auto-dismiss
+		setTimeout(() => { if (banner.parentNode) { banner.classList.remove('visible'); setTimeout(() => { try { banner.remove(); } catch (e) {} }, 300); } }, durationMs);
+	} catch (e) { console.error('showRandomFactOnLoad error', e); }
+}
+
+function setLoading(isLoading) {
+	try {
+		console.log('setLoading ->', isLoading);
+	} catch (e) {}
+	if (isLoading) {
+		btn.disabled = true;
+		// show rotating facts overlay while network is active
+		_showFactsLoading();
+	} else {
+		btn.disabled = false;
+		_hideFactsLoading();
 	}
+}
 
 	function clearGallery() {
 		galleryEl.innerHTML = '';
@@ -510,6 +608,8 @@
 			console.error(err);
 		} finally {
 			setLoading(false);
+			// show a single random fact banner after initial load completes
+			try { showRandomFactOnLoad(); } catch (e) { /* ignore */ }
 		}
 	}
 
