@@ -5,10 +5,20 @@
 (function () {
 	'use strict';
 
-		// Basic runtime diagnostics to help debug why the loading overlay may not appear.
-		try {
-			console.log('script.js IIFE start');
-		} catch (e) { /* ignore */ }
+		// Toggle this to enable debug console output during development.
+		// Enable by adding `?debug=1` to the URL or setting sessionStorage.debug = '1'.
+		const DEBUG = (function () {
+			try {
+				const p = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+				if (p && (p.get('debug') === '1' || p.get('debug') === 'true')) return true;
+				if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('debug') === '1') return true;
+			} catch (e) { /* ignore */ }
+			return false;
+		})();
+
+		// Basic runtime diagnostics: always surface errors but only log informational
+		// messages when DEBUG is enabled.
+		if (DEBUG) console.log('script.js IIFE start');
 
 		window.addEventListener('error', (ev) => {
 			console.error('Uncaught error:', ev && ev.error ? ev.error : ev.message || ev);
@@ -245,7 +255,7 @@ function _createFactsOverlay() {
 
 function _showFactsLoading() {
 	const ov = _createFactsOverlay();
-	console.log('Showing facts loading overlay');
+	if (typeof DEBUG !== 'undefined' && DEBUG) console.log('Showing facts loading overlay');
 	ov.style.display = 'flex';
 	ov.setAttribute('aria-hidden', 'false');
 	const txt = ov.querySelector('.fact-text');
@@ -262,7 +272,7 @@ function _showFactsLoading() {
 
 function _hideFactsLoading() {
 	if (!_factsOverlay) return;
-	console.log('Hiding facts loading overlay');
+	if (typeof DEBUG !== 'undefined' && DEBUG) console.log('Hiding facts loading overlay');
 	_factsOverlay.style.display = 'none';
 	_factsOverlay.setAttribute('aria-hidden', 'true');
 	if (_factTimer) { clearInterval(_factTimer); _factTimer = null; }
@@ -279,8 +289,13 @@ function showRandomFactOnLoad(durationMs = 6000) {
 		banner.innerHTML = `<div class="didyouknow-inner"><strong>Did you know?</strong><div class="didyouknow-text">${text}</div><button class="didyouknow-close" aria-label="Dismiss">×</button></div>`;
 		const host = document.body || document.documentElement;
 		host.appendChild(banner);
-		// show animation
-		requestAnimationFrame(() => { banner.classList.add('visible'); });
+		// make extra-sure the banner is visually on top and visible (inline styles as a fallback)
+		banner.style.zIndex = '99999';
+		banner.style.pointerEvents = 'auto';
+		banner.style.display = 'block';
+		// show animation (use both rAF and immediate class add as a fallback for strict CSP/fast flows)
+		requestAnimationFrame(() => { try { banner.classList.add('visible'); } catch (e) {} });
+		try { banner.classList.add('visible'); } catch (e) {}
 		// close handler
 		banner.querySelector('.didyouknow-close').addEventListener('click', () => { banner.classList.remove('visible'); setTimeout(() => banner.remove(), 300); });
 		// auto-dismiss
@@ -289,15 +304,13 @@ function showRandomFactOnLoad(durationMs = 6000) {
 }
 
 function setLoading(isLoading) {
-	try {
-		console.log('setLoading ->', isLoading);
-	} catch (e) {}
+	if (typeof DEBUG !== 'undefined' && DEBUG) console.log('setLoading ->', isLoading);
 	if (isLoading) {
-		btn.disabled = true;
+		if (btn) btn.disabled = true;
 		// show rotating facts overlay while network is active
 		_showFactsLoading();
 	} else {
-		btn.disabled = false;
+		if (btn) btn.disabled = false;
 		_hideFactsLoading();
 	}
 }
@@ -412,7 +425,11 @@ function setLoading(isLoading) {
 	function closeModal() { modal.setAttribute('aria-hidden', 'true'); modal.style.display = 'none'; document.body.style.overflow = ''; }
 
 
-	modalClose.addEventListener('click', closeModal);
+	if (modalClose) {
+		modalClose.addEventListener('click', closeModal);
+	} else if (typeof DEBUG !== 'undefined' && DEBUG) {
+		console.warn('modalClose element not found; modal will not be closable via button');
+	}
 	// Close modal when clicking the backdrop (modal element itself)
 	modal.addEventListener('click', (e) => {
 		// If the click target is the modal backdrop (not the inner dialog), close it
@@ -427,7 +444,8 @@ function setLoading(isLoading) {
 	document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') { closeModal(); } });
 
 
-	btn.addEventListener('click', async () => {
+	if (btn) {
+	    btn.addEventListener('click', async () => {
 		// Robust date handling:
 		// - If start/end are empty, treat them as full-range (dataset bounds)
 		// - If one is empty, clamp it to dataset min/max
@@ -491,6 +509,9 @@ function setLoading(isLoading) {
 			setLoading(false);
 		}
 	});
+} else if (typeof DEBUG !== 'undefined' && DEBUG) {
+    console.warn('getImageBtn not found; fetch handler not attached');
+}
 
 
 	// Render items into the gallery
